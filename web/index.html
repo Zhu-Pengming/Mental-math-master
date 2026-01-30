@@ -53,6 +53,13 @@
     <script>document.write('<script src="storage.js?v=' + cacheBuster + '"><\/script>');</script>
     <script>document.write('<script src="telemetry.js?v=' + cacheBuster + '"><\/script>');</script>
     
+    <!-- Shared schemas and utilities (load before layers) -->
+    <script>document.write('<script src="event-schema.js?v=' + cacheBuster + '"><\/script>');</script>
+    <script>document.write('<script src="error-classifier.js?v=' + cacheBuster + '"><\/script>');</script>
+    <script>document.write('<script src="explanation-bandit.js?v=' + cacheBuster + '"><\/script>');</script>
+    <script>document.write('<script src="baseline-scheduler.js?v=' + cacheBuster + '"><\/script>');</script>
+    <script>document.write('<script src="generator-validator.js?v=' + cacheBuster + '"><\/script>');</script>
+    
     <!-- Curriculum and i18n -->
     <script>document.write('<script src="i18n.js?v=' + cacheBuster + '"><\/script>');</script>
     <script>document.write('<script src="curriculum.js?v=' + cacheBuster + '"><\/script>');</script>

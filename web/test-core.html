@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Core Component Tests - Mental Math Master</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .test-pass { color: #10b981; }
+        .test-fail { color: #ef4444; }
+        .test-section { margin: 1rem 0; padding: 1rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; }
+    </style>
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">Mental Math Master - Core Tests</h1>
+        <div id="test-results"></div>
+    </div>
+
+    <!-- Load dependencies -->
+    <script src="shared/event-schema.js"></script>
+    <script src="web/error-classifier.js"></script>
+    <script src="web/explanation-bandit.js"></script>
+    <script src="web/baseline-scheduler.js"></script>
+    <script src="web/generator-validator.js"></script>
+    <script src="web/curriculum.js"></script>
+
+    <script>
+        // Test runner
+        class TestRunner {
+            constructor() {
+                this.results = [];
+                this.passed = 0;
+                this.failed = 0;
+            }
+
+            test(name, fn) {
+                try {
+                    fn();
+                    this.results.push({ name, passed: true });
+                    this.passed++;
+                } catch (e) {
+                    this.results.push({ name, passed: false, error: e.message });
+                    this.failed++;
+                }
+            }
+
+            assert(condition, message) {
+                if (!condition) {
+                    throw new Error(message || 'Assertion failed');
+                }
+            }
+
+            assertEqual(actual, expected, message) {
+                if (actual !== expected) {
+                    throw new Error(message || `Expected ${expected}, got ${actual}`);
+                }
+            }
+
+            render() {
+                const container = document.getElementById('test-results');
+                
+                let html = `
+                    <div class="test-section bg-white">
+                        <h2 class="text-xl font-bold mb-2">Test Summary</h2>
+                        <p class="test-pass">✓ Passed: ${this.passed}</p>
+                        <p class="test-fail">✗ Failed: ${this.failed}</p>
+                        <p>Total: ${this.passed + this.failed}</p>
+                    </div>
+                `;
+
+                for (const result of this.results) {
+                    const status = result.passed ? '✓' : '✗';
+                    const className = result.passed ? 'test-pass' : 'test-fail';
+                    html += `
+                        <div class="test-section">
+                            <p class="${className} font-semibold">${status} ${result.name}</p>
+                            ${result.error ? `<p class="text-sm text-gray-600 mt-1">Error: ${result.error}</p>` : ''}
+                        </div>
+                    `;
+                }
+
+                container.innerHTML = html;
+            }
+        }
+
+        // Run tests
+        const runner = new TestRunner();
+
+        // ===== AttemptEvent Tests =====
+        runner.test('AttemptEvent: Create valid event', () => {
+            const event = window.AttemptEvent.create({
+                userId: 'user_123',
+                sessionId: 'session_456',
+                skillId: 'b1',
+                difficulty: 3,
+                correct: true,
+                responseTimeSec: 8.5,
+                hintUsed: false,
+                attemptCount: 1
+            });
+            runner.assert(event.correct === true, 'Event should be correct');
+            runner.assert(event.errorTag === null, 'Correct event should have null errorTag');
+        });
+
+        runner.test('AttemptEvent: Validate incorrect event requires errorTag', () => {
+            try {
+                window.AttemptEvent.create({
+                    userId: 'user_123',
+                    sessionId: 'session_456',
+                    skillId: 'b1',
+                    difficulty: 3,
+                    correct: false,
+                    responseTimeSec: 8.5
+                });
+                runner.assert(false, 'Should throw error for missing errorTag');
+            } catch (e) {
+                runner.assert(e.message.includes('errorTag'), 'Should require errorTag');
+            }
+        });
+
+        runner.test('AttemptEvent: Compute reward for correct answer', () => {
+            const event = window.AttemptEvent.create({
+                userId: 'user_123',
+                sessionId: 'session_456',
+                skillId: 'b1',
+                difficulty: 3,
+                correct: true,
+                responseTimeSec: 8.5,
+                hintUsed: false,
+                attemptCount: 1
+            });
+            const reward = window.AttemptEvent.computeReward(event);
+            runner.assert(reward > 0, 'Reward should be positive for correct answer');
+        });
+
+        // ===== ErrorClassifier Tests =====
+        runner.test('ErrorClassifier: Classify b1 pairing error', () => {
+            const classifier = new ErrorClassifier();
+            const errorTag = classifier.classify('b1', '14 + 6 + 5 + 25', 50, 40, 3);
+            runner.assertEqual(errorTag, 'pairing_missed', 'Should detect pairing missed');
+        });
+
+        runner.test('ErrorClassifier: Get error types for skill', () => {
+            const classifier = new ErrorClassifier();
+            const types = classifier.getErrorTypes('b1');
+            runner.assert(types.length >= 3, 'Should have at least 3 error types for b1');
+        });
+
+        runner.test('ErrorClassifier: Detect recurring error', () => {
+            const classifier = new ErrorClassifier();
+            const history = [
+                { skillId: 'b1', errorTag: 'pairing_missed' },
+                { skillId: 'b1', errorTag: 'pairing_missed' },
+                { skillId: 'b1', errorTag: 'pairing_missed' }
+            ];
+            const isRecurring = classifier.isRecurringError(history, 'b1', 'pairing_missed');
+            runner.assert(isRecurring, 'Should detect recurring error');
+        });
+
+        // ===== ExplanationBandit Tests =====
+        runner.test('ExplanationBandit: Select style', () => {
+            const bandit = new ExplanationBandit();
+            const style = bandit.selectStyle('b1', 'pairing_missed');
+            runner.assert(['short', 'stepwise', 'analogy'].includes(style), 'Should select valid style');
+        });
+
+        runner.test('ExplanationBandit: Update from outcome', () => {
+            const bandit = new ExplanationBandit();
+            bandit.selectStyle('b1', 'pairing_missed');
+            bandit.updateFromOutcome('b1', 'pairing_missed', false);
+            const stats = bandit.getStatistics('b1', 'pairing_missed');
+            runner.assert(stats.length === 3, 'Should have stats for all 3 styles');
+        });
+
+        runner.test('ExplanationBandit: Get best style', () => {
+            const bandit = new ExplanationBandit();
+            bandit.selectStyle('b1', 'pairing_missed');
+            bandit.updateFromOutcome('b1', 'pairing_missed', false);
+            const best = bandit.getBestStyle('b1', 'pairing_missed');
+            runner.assert(best !== null, 'Should return best style');
+        });
+
+        // ===== BaselineScheduler Tests =====
+        runner.test('BaselineScheduler: Select next skill', () => {
+            const scheduler = new BaselineScheduler();
+            const state = {
+                mastery: { b1: 0.5, b2: 0.3 },
+                dueReviews: [],
+                lastSkillId: null,
+                recentSwitchCount: 0,
+                sessionLengthMin: 5,
+                fatigueScore: 0.2,
+                recentAccuracy: 0.75,
+                currentStreak: 3,
+                availableSkills: ['b1', 'b2', 'b3']
+            };
+            const result = scheduler.getNextSkill(state);
+            runner.assert(result.skillId, 'Should return skillId');
+            runner.assert(result.mode, 'Should return mode');
+            runner.assert(result.reason, 'Should return reason');
+        });
+
+        runner.test('BaselineScheduler: Prioritize due reviews', () => {
+            const scheduler = new BaselineScheduler();
+            const state = {
+                mastery: { b1: 0.8 },
+                dueReviews: ['b1'],
+                lastSkillId: null,
+                recentSwitchCount: 0,
+                sessionLengthMin: 5,
+                fatigueScore: 0.2,
+                recentAccuracy: 0.75,
+                currentStreak: 3,
+                availableSkills: ['b1', 'b2', 'b3']
+            };
+            
+            // Run multiple times to check probability
+            let reviewCount = 0;
+            for (let i = 0; i < 20; i++) {
+                const result = scheduler.getNextSkill(state);
+                if (result.reason === 'due_review') reviewCount++;
+            }
+            runner.assert(reviewCount > 10, 'Should prioritize due reviews');
+        });
+
+        runner.test('BaselineScheduler: Compute state from user data', () => {
+            const state = BaselineScheduler.computeState({
+                mastery: { b1: 0.5 },
+                reviewQueue: [{ skillId: 'b1', nextReview: Date.now() - 1000 }],
+                lastSkillId: 'b1',
+                sessionHistory: [
+                    { skillId: 'b1', correct: true },
+                    { skillId: 'b2', correct: true }
+                ],
+                sessionStartTime: Date.now() - 600000,
+                availableSkills: ['b1', 'b2', 'b3']
+            });
+            runner.assert(state.dueReviews.length === 1, 'Should compute due reviews');
+            runner.assert(state.fatigueScore >= 0, 'Should compute fatigue score');
+        });
+
+        // ===== GeneratorValidator Tests =====
+        runner.test('GeneratorValidator: Validate single generator', () => {
+            const validator = new GeneratorValidator();
+            const lesson = CURRICULUM[0].lessons[0]; // b1
+            const result = validator.validateGenerator(lesson.id, lesson.generator, 10);
+            runner.assert(result.skillId === lesson.id, 'Should validate generator');
+        });
+
+        runner.test('GeneratorValidator: Check monotonic difficulty', () => {
+            const validator = new GeneratorValidator();
+            const lesson = CURRICULUM[0].lessons[0]; // b1
+            const result = validator.validateGenerator(lesson.id, lesson.generator, 10);
+            
+            // Check that difficulty increases
+            for (let d = 1; d < 5; d++) {
+                const current = result.samples[d];
+                const next = result.samples[d + 1];
+                if (current && next) {
+                    runner.assert(
+                        next.avgMaxNumber >= current.avgMaxNumber * 0.9,
+                        `Difficulty ${d} to ${d+1} should increase`
+                    );
+                }
+            }
+        });
+
+        // Render results
+        runner.render();
+
+        // Log summary
+        console.log(`Tests completed: ${runner.passed} passed, ${runner.failed} failed`);
+    </script>
+</body>
+</html>

@@ -132,11 +132,36 @@ function checkPracticeAnswer() {
     if (correct) {
         state.practiceFeedback = 'correct';
         state.practiceStreak++;
-        adaptiveEngine.logAttempt(state.activeLesson.id, state.currentDifficulty, true, timeSpent, state.showHint);
+        adaptiveEngine.logAttempt(state.activeLesson.id, state.currentDifficulty, true, timeSpent, state.showHint, state.practiceAttempts);
     } else {
         state.practiceFeedback = 'incorrect';
         state.practiceStreak = 0;
-        adaptiveEngine.logAttempt(state.activeLesson.id, state.currentDifficulty, false, timeSpent, state.showHint);
+        
+        // Diagnose error and select explanation style
+        const errorTag = adaptiveEngine.layerC.classifyError(
+            state.activeLesson.id,
+            state.practiceProblem.q,
+            state.practiceProblem.a,
+            val,
+            state.currentDifficulty
+        );
+        
+        const explanationStyle = adaptiveEngine.layerC.selectExplanationStyle(
+            state.activeLesson.id,
+            errorTag,
+            { difficulty: state.currentDifficulty, timeSpent, hintUsed: state.showHint }
+        );
+        
+        adaptiveEngine.logAttempt(
+            state.activeLesson.id,
+            state.currentDifficulty,
+            false,
+            timeSpent,
+            state.showHint,
+            state.practiceAttempts,
+            errorTag,
+            explanationStyle
+        );
         
         if (adaptiveEngine.shouldShowHint(state.activeLesson.id, state.practiceAttempts, timeSpent)) {
             state.showHint = true;

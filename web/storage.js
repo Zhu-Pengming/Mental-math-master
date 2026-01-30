@@ -125,9 +125,15 @@ class StorageManager {
             }
         });
         
-        // Ensure totalCorrect exists (migration for old profiles)
-        if (profile.totalCorrect === undefined) {
+        // Ensure all required fields exist (migration for old profiles)
+        if (profile.totalCorrect === undefined || profile.totalCorrect === null) {
             profile.totalCorrect = 0;
+        }
+        if (profile.totalQuestions === undefined || profile.totalQuestions === null) {
+            profile.totalQuestions = 0;
+        }
+        if (profile.totalSessions === undefined || profile.totalSessions === null) {
+            profile.totalSessions = 0;
         }
         
         return profile;

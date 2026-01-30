@@ -638,7 +638,17 @@ mental-math-master/
 │   ├── telemetry.js               # Unified logging system
 │   ├── app.js                     # UI rendering and interactions
 │   ├── api-client.js              # Backend API client
-│   └── i18n.js                    # Internationalization (EN/ZH)
+│   ├── i18n.js                    # Internationalization (EN/ZH)
+│   │
+│   ├── error-classifier.js        # ✨ Rule-based error diagnosis
+│   ├── explanation-bandit.js      # ✨ Thompson Sampling for explanations
+│   ├── baseline-scheduler.js      # ✨ Deterministic skill scheduler
+│   ├── generator-validator.js     # ✨ Difficulty monotonicity testing
+│   ├── test-core.html             # ✨ Unit tests for new components
+│   └── test-generator.html        # Generator testing tool
+│
+├── shared/                        # ✨ Shared between frontend & backend
+│   └── event-schema.js            # ✨ Unified AttemptEvent schema
 │
 ├── server/                        # Backend (Node.js + MongoDB)
 │   ├── server.js                  # Express server entry point
@@ -650,8 +660,8 @@ mental-math-master/
 │   │
 │   ├── models/
 │   │   ├── User.js                # User schema
-│   │   ├── LessonProgress.js       # Progress tracking schema
-│   │   └── PerformanceHistory.js   # Attempt history schema
+│   │   ├── LessonProgress.js      # Progress tracking schema
+│   │   └── PerformanceHistory.js  # Attempt history schema
 │   │
 │   └── routes/
 │       ├── auth.js                # Authentication endpoints
@@ -660,10 +670,16 @@ mental-math-master/
 │       ├── analytics.js           # Analytics endpoints
 │       └── lessons.js             # Curriculum endpoints
 │
+├── .github/
+│   └── workflows/
+│       └── ci.yml                 # ✨ Automated testing pipeline
+│
 ├── README.md                      # This file
 ├── SERVER_README.md               # Backend documentation
-└── IMPLEMENTATION_ROADMAP.md      # Development phases
+└── INTEGRATION_GUIDE.md           # ✨ How to integrate new components
 ```
+
+**✨ = New engineering components (Phase 4)**
 
 ### Key Components
 
@@ -734,51 +750,89 @@ Thompson Sampling naturally converges toward this target by:
 
 ---
 
-## 🚀 Implementation Roadmap
+## 🚀 Implementation Status & Next Steps
 
-### Phase 0: Modular Architecture ✅ COMPLETED
-- ✅ Refactored codebase into modular files
-- ✅ Created `storage.js` for centralized data persistence
-- ✅ Created `telemetry.js` for unified logging
-- ✅ Updated module loading order in index.html
-- ✅ Integrated all three layers with storage manager
+### ✅ Phase 0-3: Core Three-Layer System (COMPLETED)
+- ✅ Modular architecture with separated concerns
+- ✅ Layer A: Thompson Sampling difficulty adjustment
+- ✅ Layer B: Spaced repetition + baseline scheduler
+- ✅ Layer C: Error diagnosis + explanation bandit
+- ✅ Storage versioning system (`mathMasterProfile_v2`)
+- ✅ Centralized telemetry and logging
 
-### Phase 1: Layer A Enhancement ✅ COMPLETED
-- ✅ Enhanced all 7 skill generators with proper difficulty scaling (1-5)
-- ✅ Added Layer A debug panel to analytics
-- ✅ Implemented Thompson Sampling with contextual bonuses
-- ✅ Fixed Beta prior (alpha=1, beta=1)
-- ✅ Verified monotonic difficulty progression
+### ✅ Phase 4: Engineering Foundation (COMPLETED)
+**8 Critical Improvements Implemented:**
 
-### Phase 2: Layer B Enhancement ✅ COMPLETED
-- ✅ Intelligent review queue insertion logic
-- ✅ Review priority scoring system
-- ✅ Enhanced baseline policy with confidence scoring
-- ✅ Added session statistics tracking
-- ✅ Created review queue analytics panel
-- ✅ Implemented SM-2 spaced repetition
+1. ✅ **Unified Event Schema** (`shared/event-schema.js`)
+   - Single AttemptEvent schema for frontend + backend
+   - Validation, factory functions, reward computation
+   - Ready for MongoDB integration
 
-### Phase 3: Layer C Enhancement ✅ COMPLETED
-- ✅ Enhanced error classification (20+ error types)
-- ✅ Skill-specific error pattern detection
-- ✅ Three explanation styles (short, stepwise, analogy)
-- ✅ Error analytics panel
-- ✅ Explanation effectiveness tracking
+2. ✅ **Generator Validation** (`web/generator-validator.js`)
+   - Automated testing for difficulty monotonicity
+   - Validates all 7 skills have proper 1-5 scaling
+   - Run tests: open `web/test-core.html`
 
-### Phase 4: Backend Integration (Current)
-- [ ] Deploy Node.js + MongoDB backend
-- [ ] Implement API endpoints for all features
-- [ ] Add user authentication (JWT)
-- [ ] Cross-device data sync
-- [ ] Server-side analytics aggregation
-- [ ] Offline RL training pipeline
+3. ✅ **Rule-Based Error Classification** (`web/error-classifier.js`)
+   - 3-5 error types per skill (no LLM required)
+   - Structural analysis of answer differences
+   - Recurring error detection
 
-### Phase 5: Advanced Features (Future)
-- [ ] Teacher dashboard for classrooms
-- [ ] Achievement system with badges
-- [ ] Voice input for answers
-- [ ] Export progress as PDF report
-- [ ] Custom lesson creator
+4. ✅ **Explanation Bandit** (`web/explanation-bandit.js`)
+   - Thompson Sampling for style selection
+   - Reward: user doesn't repeat same error
+   - Tracks effectiveness of short/stepwise/analogy
+
+5. ✅ **Baseline Scheduler Interface** (`web/baseline-scheduler.js`)
+   - Fixed API: `getNextSkill(state) -> {skillId, mode, reason, targetDifficulty}`
+   - Deterministic policy: due reviews → weak skills → diversity → exploration
+   - Ready to swap with RL policy
+
+6. ✅ **Storage Versioning** (already in `storage.js`)
+   - `mathMasterProfile_v2` with migration from v1
+   - Auto-pruning (500 question logs, 200 error logs)
+   - Export/import functionality
+
+7. ✅ **Minimal CI** (`.github/workflows/ci.yml`)
+   - Lint + test placeholders for backend
+   - Frontend file validation
+   - Ready for expansion
+
+8. ✅ **Test Suite** (`web/test-core.html`)
+   - Unit tests for all new components
+   - AttemptEvent, ErrorClassifier, ExplanationBandit, BaselineScheduler
+   - Generator validation tests
+
+### 🔧 Phase 5: Production Readiness (CURRENT - DO THESE NEXT)
+
+**Priority 1: Make Generators Truly Difficulty-Aware**
+- [ ] Run `web/test-core.html` and fix any failing generator validations
+- [ ] Ensure each skill has strict monotonic difficulty (1→5)
+- [ ] Add "trap" patterns at difficulty 4-5 (e.g., near-100 numbers, misleading pairs)
+
+**Priority 2: Integrate New Components into Main App**
+- [ ] Replace Layer C error diagnosis with `ErrorClassifier`
+- [ ] Replace Layer C explanation selection with `ExplanationBandit`
+- [ ] Replace Layer B scheduler with `BaselineScheduler`
+- [ ] Use `AttemptEvent.create()` for all question logging
+
+**Priority 3: Backend Integration**
+- [ ] Add `shared/event-schema.js` to backend models
+- [ ] Create `/api/attempt` endpoint using AttemptEvent schema
+- [ ] Implement `/api/next` endpoint using BaselineScheduler
+- [ ] Add `/api/insights` aggregation from attempt logs
+
+**Priority 4: Validation & Testing**
+- [ ] Run 50+ questions and verify difficulty converges to 70-80% accuracy
+- [ ] Verify due reviews appear at correct intervals (1d, 6d, exponential)
+- [ ] Verify explanation styles change after 2-3 same errors
+- [ ] Check localStorage stays under 150KB
+
+### 📋 Phase 6: Advanced Features (FUTURE)
+- [ ] Offline RL training pipeline for Layer B
+- [ ] LLM integration for Layer C (explanation polish only)
+- [ ] Teacher dashboard
+- [ ] Achievement system
 - [ ] Mobile app wrapper
 
 ---

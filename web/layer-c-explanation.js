@@ -8,6 +8,10 @@ class ExplanationEngine {
         this.errorPatterns = this.loadErrorPatterns();
         this.explanationArms = this.loadExplanationArms();
         this.errorHistory = this.loadErrorHistory();
+        
+        // Initialize new components
+        this.errorClassifier = new ErrorClassifier();
+        this.explanationBandit = new ExplanationBandit();
     }
 
     loadErrorPatterns() {
@@ -72,69 +76,8 @@ class ExplanationEngine {
         return errorTag;
     }
 
-    classifyError(skillId, question, correctAnswer, userAnswer) {
-        const diff = Math.abs(correctAnswer - userAnswer);
-        if (diff === 0) return 'none';
-        
-        const ratio = diff / Math.max(correctAnswer, 1);
-        
-        // Skill-specific error classification with enhanced pattern detection
-        if (skillId === 'b1') {
-            // Making 10s - detect pairing mistakes
-            if (diff === 10 || diff === 20 || diff === 30) return 'pairing_missed';
-            if (diff % 10 === 0 && diff <= 100) return 'complement_error';
-            if (diff < 10) return 'arithmetic_mistake';
-            return 'grouping_error';
-        }
-        
-        if (skillId === 'b2') {
-            // Subtraction grouping - detect complement mistakes
-            if (diff === 10 || diff === 20) return 'complement_missed';
-            if (diff % 10 === 0) return 'grouping_order_error';
-            if (diff < 10) return 'arithmetic_mistake';
-            return 'subtraction_error';
-        }
-        
-        if (skillId === 'b3') {
-            // Rounding - detect compensation mistakes
-            const possibleDiffs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-            if (possibleDiffs.includes(diff)) return 'compensation_forgot';
-            if (diff > 10 && diff < 20) return 'compensation_wrong_sign';
-            return 'rounding_error';
-        }
-        
-        if (skillId === 'm1') {
-            // Factor splitting - detect magic pair mistakes
-            if (ratio > 0.5) return 'factoring_missed';
-            if (diff % 10 === 0 || diff % 100 === 0 || diff % 1000 === 0) return 'magic_pair_missed';
-            if (diff < 100) return 'multiplication_error';
-            return 'factor_combination_error';
-        }
-        
-        if (skillId === 'm2') {
-            // Distributive law - detect factoring mistakes
-            if (ratio > 0.3) return 'distributive_not_applied';
-            if (diff % 10 === 0 || diff % 100 === 0) return 'sum_calculation_error';
-            return 'multiplication_error';
-        }
-        
-        if (skillId === 'a1') {
-            // Same tens complementary - detect formula mistakes
-            if (diff < 100) return 'units_multiplication_error';
-            if (diff >= 100 && diff < 1000) return 'tens_formula_error';
-            if (diff % 100 === 0) return 'forgot_units_part';
-            return 'pattern_not_recognized';
-        }
-        
-        if (skillId === 'a2') {
-            // Sequence sum - detect formula mistakes
-            if (ratio > 0.3) return 'formula_not_used';
-            if (diff % 2 === 1) return 'division_by_2_error';
-            if (ratio < 0.2) return 'count_error';
-            return 'sequence_formula_error';
-        }
-        
-        return 'calculation_error';
+    classifyError(skillId, question, correctAnswer, userAnswer, difficulty = 3) {
+        return this.errorClassifier.classify(skillId, question, correctAnswer, userAnswer, difficulty);
     }
 
     // ========================================================================
@@ -294,45 +237,7 @@ class ExplanationEngine {
     // ========================================================================
     
     selectExplanationStyle(skillId, errorTag, userContext) {
-        const styles = ['short', 'stepwise', 'analogy'];
-        const key = `${skillId}_${errorTag}`;
-        
-        // Initialize arms for this error type
-        for (const style of styles) {
-            const armKey = `${key}_${style}`;
-            if (!this.explanationArms[armKey]) {
-                this.explanationArms[armKey] = {
-                    alpha: 1,
-                    beta: 1,
-                    uses: 0
-                };
-            }
-        }
-        
-        // Thompson Sampling
-        let bestStyle = 'short';
-        let bestSample = -Infinity;
-        
-        for (const style of styles) {
-            const armKey = `${key}_${style}`;
-            const arm = this.explanationArms[armKey];
-            
-            const sample = this.sampleBeta(arm.alpha, arm.beta);
-            
-            if (sample > bestSample) {
-                bestSample = sample;
-                bestStyle = style;
-            }
-        }
-        
-        return bestStyle;
-    }
-
-    sampleBeta(alpha, beta) {
-        const mean = alpha / (alpha + beta);
-        const variance = (alpha * beta) / ((alpha + beta) ** 2 * (alpha + beta + 1));
-        const noise = (Math.random() - 0.5) * Math.sqrt(variance) * 3;
-        return Math.max(0, Math.min(1, mean + noise));
+        return this.explanationBandit.selectStyle(skillId, errorTag);
     }
 
     // ========================================================================
@@ -340,18 +245,8 @@ class ExplanationEngine {
     // ========================================================================
     
     updateExplanationEffectiveness(skillId, errorTag, styleUsed, wasEffective) {
-        const key = `${skillId}_${errorTag}_${styleUsed}`;
-        const arm = this.explanationArms[key];
-        
-        if (arm) {
-            arm.uses++;
-            if (wasEffective) {
-                arm.alpha++; // Success: user didn't repeat same error
-            } else {
-                arm.beta++; // Failure: user repeated same error
-            }
-            this.saveExplanationArms();
-        }
+        const errorRepeated = !wasEffective;
+        this.explanationBandit.updateFromOutcome(skillId, errorTag, errorRepeated);
     }
 
     // Check if next question shows improvement (no same error)

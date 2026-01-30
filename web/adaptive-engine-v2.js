@@ -12,6 +12,7 @@ class AdaptiveLearningEngineV2 {
         
         // User profile and session data
         this.userProfile = this.loadProfile();
+        this.sessionId = 'session_' + Date.now();
         this.sessionData = {
             startTime: Date.now(),
             questionsAttempted: 0,
@@ -24,6 +25,9 @@ class AdaptiveLearningEngineV2 {
         
         // Question logs (minimal structure)
         this.questionLogs = this.loadQuestionLogs();
+        
+        // Ensure profile is saved with correct initial values
+        this.saveProfile();
     }
 
     // ========================================================================
@@ -31,22 +35,33 @@ class AdaptiveLearningEngineV2 {
     // ========================================================================
     
     loadProfile() {
+        let profile;
         if (window.storageManager) {
-            return window.storageManager.loadProfile();
+            profile = window.storageManager.loadProfile();
+        } else {
+            profile = {
+                userId: this.generateUserId(),
+                createdAt: Date.now(),
+                totalSessions: 0,
+                totalQuestions: 0,
+                totalCorrect: 0,
+                preferences: {
+                    targetAccuracy: 0.75,
+                    maxDifficulty: 5,
+                    hintPreference: 'adaptive'
+                }
+            };
         }
         
-        return {
-            userId: this.generateUserId(),
-            createdAt: Date.now(),
-            totalSessions: 0,
-            totalQuestions: 0,
-            totalCorrect: 0,
-            preferences: {
-                targetAccuracy: 0.75,
-                maxDifficulty: 5,
-                hintPreference: 'adaptive'
-            }
-        };
+        // Ensure totalCorrect is always a number
+        if (typeof profile.totalCorrect !== 'number') {
+            profile.totalCorrect = 0;
+        }
+        if (typeof profile.totalQuestions !== 'number') {
+            profile.totalQuestions = 0;
+        }
+        
+        return profile;
     }
 
     saveProfile() {
@@ -162,18 +177,22 @@ class AdaptiveLearningEngineV2 {
     // LOGGING & UPDATES
     // ========================================================================
     
-    logAttempt(skillId, difficulty, correct, timeSpent, hintUsed = false, attemptCount = 1) {
-        // Create minimal question log
-        const log = this.layerA.createQuestionLog(
-            skillId, 
-            difficulty, 
-            correct, 
-            timeSpent, 
-            hintUsed, 
-            attemptCount
-        );
+    logAttempt(skillId, difficulty, correct, timeSpent, hintUsed = false, attemptCount = 1, errorTag = null, explanationStyle = null) {
+        // Create AttemptEvent using unified schema
+        const event = window.AttemptEvent.create({
+            userId: this.userProfile.userId,
+            sessionId: this.sessionId || 'session_' + Date.now(),
+            skillId,
+            difficulty,
+            correct,
+            responseTimeSec: timeSpent,
+            hintUsed,
+            attemptCount,
+            errorTag: correct ? null : errorTag,
+            explanationStyle: correct ? null : explanationStyle
+        });
         
-        this.questionLogs.push(log);
+        this.questionLogs.push(event);
         this.saveQuestionLogs();
         
         // Log to telemetry system
@@ -272,11 +291,14 @@ class AdaptiveLearningEngineV2 {
     // ========================================================================
     
     getInsights() {
-        const totalCorrect = this.userProfile.totalCorrect || 0;
+        // Ensure values are numbers
+        const totalCorrect = Number(this.userProfile.totalCorrect) || 0;
+        const totalQuestions = Number(this.userProfile.totalQuestions) || 0;
+        
         const insights = {
-            totalQuestions: this.userProfile.totalQuestions,
-            overallAccuracy: this.userProfile.totalQuestions > 0 
-                ? totalCorrect / this.userProfile.totalQuestions 
+            totalQuestions: totalQuestions,
+            overallAccuracy: totalQuestions > 0 
+                ? totalCorrect / totalQuestions 
                 : 0,
             sessionQuestions: this.sessionData.questionsAttempted,
             sessionAccuracy: this.sessionData.questionsAttempted > 0

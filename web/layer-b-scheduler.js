@@ -10,6 +10,13 @@ class SkillSchedulingEngine {
         this.baselineWeight = 0.85; // 85% baseline, 15% RL exploration
         this.lastSkillId = null;
         this.skillSwitchCount = 0;
+        this.sessionHistory = [];
+        this.sessionStartTime = Date.now();
+        
+        // Initialize new BaselineScheduler
+        this.baselineScheduler = new BaselineScheduler();
+        this.lastSchedulingReason = null;
+        this.lastSchedulingMode = null;
     }
 
     loadReviewQueue() {
@@ -177,15 +184,29 @@ class SkillSchedulingEngine {
     // ========================================================================
     
     selectNextSkill(availableSkills, sessionData) {
-        const state = this.getCurriculumState(sessionData);
+        // Prepare state for BaselineScheduler
+        const state = BaselineScheduler.computeState({
+            mastery: this.skillMastery,
+            reviewQueue: this.reviewQueue,
+            lastSkillId: this.lastSkillId,
+            sessionHistory: this.sessionHistory,
+            sessionStartTime: this.sessionStartTime,
+            availableSkills
+        });
         
-        // Use baseline policy most of the time (safe)
-        if (Math.random() < this.baselineWeight) {
-            return this.selectNextSkillBaseline(availableSkills, state);
-        } else {
-            // Use RL policy for exploration
-            return this.selectNextSkillRL(availableSkills, state);
-        }
+        // Get next skill from BaselineScheduler
+        const result = this.baselineScheduler.getNextSkill(state);
+        
+        // Store for analytics
+        this.lastSchedulingReason = result.reason;
+        this.lastSchedulingMode = result.mode;
+        
+        return {
+            skillId: result.skillId,
+            reason: result.reason,
+            mode: result.mode,
+            targetDifficulty: result.targetDifficulty
+        };
     }
 
     // ========================================================================

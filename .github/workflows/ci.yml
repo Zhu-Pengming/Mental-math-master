@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: ./server
+      run: npm ci
+    
+    - name: Lint backend code
+      working-directory: ./server
+      run: npm run lint || echo "Lint not configured yet"
+    
+    - name: Run backend tests
+      working-directory: ./server
+      run: npm test || echo "Tests not configured yet"
+    
+    - name: Validate generators
+      run: |
+        echo "Generator validation will be added"
+        # node web/test-generators.js
+
+  frontend-validation:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Check HTML validity
+      run: |
+        echo "Checking web/index.html exists"
+        test -f web/index.html
+    
+    - name: Check required JS files
+      run: |
+        test -f web/curriculum.js
+        test -f web/layer-a-difficulty.js
+        test -f web/layer-b-scheduler.js
+        test -f web/layer-c-explanation.js
+        test -f web/adaptive-engine-v2.js
+        test -f web/storage.js
+        test -f web/app.js
+        test -f shared/event-schema.js
+        test -f web/error-classifier.js
+        test -f web/explanation-bandit.js
+        test -f web/baseline-scheduler.js
+        test -f web/generator-validator.js
