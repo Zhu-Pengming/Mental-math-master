@@ -272,10 +272,11 @@ class AdaptiveLearningEngineV2 {
     // ========================================================================
     
     getInsights() {
+        const totalCorrect = this.userProfile.totalCorrect || 0;
         const insights = {
             totalQuestions: this.userProfile.totalQuestions,
             overallAccuracy: this.userProfile.totalQuestions > 0 
-                ? this.userProfile.totalCorrect / this.userProfile.totalQuestions 
+                ? totalCorrect / this.userProfile.totalQuestions 
                 : 0,
             sessionQuestions: this.sessionData.questionsAttempted,
             sessionAccuracy: this.sessionData.questionsAttempted > 0

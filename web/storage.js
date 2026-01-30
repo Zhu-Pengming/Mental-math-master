@@ -50,6 +50,7 @@ class StorageManager {
                     createdAt: parsed.createdAt || Date.now(),
                     totalSessions: parsed.totalSessions || 0,
                     totalQuestions: parsed.totalQuestions || 0,
+                    totalCorrect: parsed.totalCorrect || 0,
                     preferences: parsed.preferences || {
                         targetAccuracy: 0.75,
                         maxDifficulty: 5,
@@ -111,17 +112,25 @@ class StorageManager {
     // ========================================================================
     
     loadProfile() {
-        return this.get(this.storageKeys.profile, {
+        const profile = this.get(this.storageKeys.profile, {
             userId: this.generateUserId(),
             createdAt: Date.now(),
             totalSessions: 0,
             totalQuestions: 0,
+            totalCorrect: 0,
             preferences: {
                 targetAccuracy: 0.75,
                 maxDifficulty: 5,
                 hintPreference: 'adaptive'
             }
         });
+        
+        // Ensure totalCorrect exists (migration for old profiles)
+        if (profile.totalCorrect === undefined) {
+            profile.totalCorrect = 0;
+        }
+        
+        return profile;
     }
 
     saveProfile(profile) {

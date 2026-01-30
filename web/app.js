@@ -229,7 +229,7 @@ function render() {
         renderHeader(state.activeLesson, () => setView('level', state.activeLevel.id));
         renderLesson(app);
     } else if (state.view === 'analytics') {
-        renderHeader({ title: 'Your Progress' }, () => setView('home'));
+        renderHeader({ title: i18n.t('yourProgress') }, () => setView('home'));
         renderAnalytics(app);
     }
 
@@ -777,12 +777,12 @@ function renderLayerADebugPanel() {
     
     panel.innerHTML = `
         <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <i data-lucide="activity" class="w-5 h-5"></i> Layer A: Difficulty Adaptation
+            <i data-lucide="activity" class="w-5 h-5"></i> ${i18n.t('layerATitle')}
         </h3>
         <div class="text-xs text-slate-600 mb-4">
-            Thompson Sampling success rate by difficulty level. Target: 70-80% accuracy.
+            ${i18n.t('layerADesc')}
         </div>
-        ${skillsHtml || '<div class="text-sm text-slate-500">No data yet. Start practicing to see difficulty adaptation!</div>'}
+        ${skillsHtml || '<div class="text-sm text-slate-500">' + i18n.t('noDataYet') + '</div>'}
     `;
     
     return panel;
@@ -832,18 +832,18 @@ function renderErrorAnalyticsPanel() {
     
     panel.innerHTML = `
         <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <i data-lucide="alert-circle" class="w-5 h-5"></i> Layer C: Error Patterns
+            <i data-lucide="alert-circle" class="w-5 h-5"></i> ${i18n.t('layerCTitle')}
         </h3>
         <div class="text-xs text-slate-600 mb-4">
-            Most common mistakes. The system learns which explanations work best for you.
+            ${i18n.t('layerCDesc')}
         </div>
         <div class="mb-4">
-            <div class="text-xs text-slate-600 mb-2 font-semibold">Top Errors:</div>
+            <div class="text-xs text-slate-600 mb-2 font-semibold">${i18n.getCurrentLanguage() === 'zh' ? '常见错误：' : 'Top Errors:'}</div>
             ${errorsHtml}
         </div>
         <div class="mt-4 pt-4 border-t border-slate-200">
             <div class="text-xs text-slate-500 italic">
-                💡 Tip: If you see the same error repeatedly, review the concept guide for that skill.
+                💡 ${i18n.getCurrentLanguage() === 'zh' ? '提示：如果您反复看到相同的错误，请查看该技能的概念指南。' : 'Tip: If you see the same error repeatedly, review the concept guide for that skill.'}
             </div>
         </div>
     `;
@@ -886,33 +886,33 @@ function renderReviewQueuePanel() {
     
     panel.innerHTML = `
         <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <i data-lucide="repeat" class="w-5 h-5"></i> Spaced Repetition Queue
+            <i data-lucide="repeat" class="w-5 h-5"></i> ${i18n.t('spacedRepetitionQueueTitle')}
         </h3>
         <div class="grid grid-cols-2 gap-4 mb-4">
             <div class="bg-blue-50 p-3 rounded-lg">
-                <div class="text-xs text-blue-600 font-semibold uppercase mb-1">Due Reviews</div>
+                <div class="text-xs text-blue-600 font-semibold uppercase mb-1">${i18n.t('dueReviews')}</div>
                 <div class="text-2xl font-bold text-blue-700">${stats.dueReviewsCount}</div>
             </div>
             <div class="bg-red-50 p-3 rounded-lg">
-                <div class="text-xs text-red-600 font-semibold uppercase mb-1">Urgent</div>
+                <div class="text-xs text-red-600 font-semibold uppercase mb-1">${i18n.t('urgent')}</div>
                 <div class="text-2xl font-bold text-red-700">${stats.urgentReviews}</div>
             </div>
         </div>
-        <div class="text-xs text-slate-600 mb-2 font-semibold">Next Reviews:</div>
+        <div class="text-xs text-slate-600 mb-2 font-semibold">${i18n.t('nextReviews')}:</div>
         <div class="space-y-2">${reviewListHtml}</div>
         <div class="mt-4 pt-4 border-t border-slate-200">
             <div class="grid grid-cols-3 gap-2 text-center text-xs">
                 <div>
                     <div class="font-bold text-slate-700">${(stats.avgMastery * 100).toFixed(0)}%</div>
-                    <div class="text-slate-500">Avg Mastery</div>
+                    <div class="text-slate-500">${i18n.getCurrentLanguage() === 'zh' ? '平均掌握度' : 'Avg Mastery'}</div>
                 </div>
                 <div>
                     <div class="font-bold text-emerald-600">${stats.skillsAbove70}</div>
-                    <div class="text-slate-500">Mastered</div>
+                    <div class="text-slate-500">${i18n.getCurrentLanguage() === 'zh' ? '已掌握' : 'Mastered'}</div>
                 </div>
                 <div>
                     <div class="font-bold text-red-600">${stats.skillsBelow40}</div>
-                    <div class="text-slate-500">Need Work</div>
+                    <div class="text-slate-500">${i18n.getCurrentLanguage() === 'zh' ? '需要加强' : 'Need Work'}</div>
                 </div>
             </div>
         </div>
@@ -964,10 +964,10 @@ function renderSkillMasteryPanel() {
     
     panel.innerHTML = `
         <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <i data-lucide="target" class="w-5 h-5"></i> Layer B: Skill Mastery
+            <i data-lucide="target" class="w-5 h-5"></i> ${i18n.t('layerBTitle')}
         </h3>
         <div class="text-xs text-slate-600 mb-4">
-            EWMA-based mastery tracking. Goal: 70%+ for all skills.
+            ${i18n.t('layerBDesc')}
         </div>
         ${masteryHtml}
     `;
@@ -990,10 +990,12 @@ function renderAnalytics(container) {
     const summary = document.createElement('div');
     summary.className = "grid md:grid-cols-4 gap-4";
     
-    const lang = i18n.getCurrentLanguage();
-    const labels = lang === 'zh' ? 
-        { total: '总题数', accuracy: '正确率', time: '平均用时', streak: '连胜' } :
-        { total: 'Total Questions', accuracy: 'Accuracy', time: 'Avg Time', streak: 'Streak' };
+    const labels = {
+        total: i18n.t('totalQuestions'),
+        accuracy: i18n.t('accuracyLabel'),
+        time: i18n.t('avgTime'),
+        streak: i18n.t('streakLabel')
+    };
     
     summary.innerHTML = `
         <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">

@@ -109,6 +109,21 @@ const translations = {
         recentPerformance: 'Recent Performance',
         resetProgress: 'Reset All Progress',
         
+        // Debug Panels
+        layerATitle: 'Layer A: Difficulty Adaptation',
+        layerADesc: 'Thompson Sampling success rate by difficulty level. Target: 70-80% accuracy.',
+        makingLabel: 'Making',
+        noDataYet: 'No data yet. Start practicing to see difficulty adaptation!',
+        layerBTitle: 'Layer B: Skill Mastery',
+        layerBDesc: 'EWMA-based mastery tracking. Goal: 70%+ for all skills.',
+        layerCTitle: 'Layer C: Error Analytics',
+        layerCDesc: 'Most common mistakes and misconceptions.',
+        spacedRepetitionQueueTitle: 'Spaced Repetition Queue',
+        dueReviews: 'DUE REVIEWS',
+        urgent: 'URGENT',
+        nextReviews: 'Next Reviews',
+        noReviewsDue: 'No reviews due. Keep practicing!',
+        
         // Lessons
         making10s: 'Making 10s (Addition)',
         subtractionGrouping: 'Subtraction Grouping',
@@ -237,6 +252,21 @@ const translations = {
         recentPerformance: '近期表现',
         resetProgress: '重置所有进度',
         
+        // 调试面板
+        layerATitle: '第A层：难度自适应',
+        layerADesc: '按难度级别的Thompson采样成功率。目标：70-80%准确率。',
+        makingLabel: '凑',
+        noDataYet: '暂无数据。开始练习以查看难度自适应！',
+        layerBTitle: '第B层：技能掌握度',
+        layerBDesc: '基于EWMA的掌握度追踪。目标：所有技能达到70%以上。',
+        layerCTitle: '第C层：错误分析',
+        layerCDesc: '最常见的错误和误解。',
+        spacedRepetitionQueueTitle: '间隔重复队列',
+        dueReviews: '待复习',
+        urgent: '紧急',
+        nextReviews: '下次复习',
+        noReviewsDue: '暂无待复习项目。继续练习！',
+        
         // 课程名称
         making10s: '凑10法（加法）',
         subtractionGrouping: '减法分组',
@@ -259,8 +289,9 @@ const translations = {
         masteryLabel: '掌握度',
         
         // Analytics 页面
-        totalQuestions: '总题数',
-        avgTime: '平均用时'
+        accuracy: '正确率',
+        currentStreak: '连胜',
+        timeLabel: '用时'
     }
 };
 
