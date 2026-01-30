@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Math Master - AI Adaptive Learning</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        /* Custom Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        
+        @keyframes bounceIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            60% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        .animate-bounce-in { animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-up { animation: slideUp 0.4s ease-out forwards; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-slow { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 min-h-screen flex flex-col">
+
+    <!-- App Container -->
+    <div id="app" class="flex-grow flex flex-col"></div>
+
+    <script>
+        const cacheBuster = Date.now();
+    </script>
+    <!-- Core infrastructure (must load first) -->
+    <script>document.write('<script src="storage.js?v=' + cacheBuster + '"><\/script>');</script>
+    <script>document.write('<script src="telemetry.js?v=' + cacheBuster + '"><\/script>');</script>
+    
+    <!-- Curriculum and i18n -->
+    <script>document.write('<script src="i18n.js?v=' + cacheBuster + '"><\/script>');</script>
+    <script>document.write('<script src="curriculum.js?v=' + cacheBuster + '"><\/script>');</script>
+    
+    <!-- Three-layer architecture -->
+    <script>document.write('<script src="layer-a-difficulty.js?v=' + cacheBuster + '"><\/script>');</script>
+    <script>document.write('<script src="layer-b-scheduler.js?v=' + cacheBuster + '"><\/script>');</script>
+    <script>document.write('<script src="layer-c-explanation.js?v=' + cacheBuster + '"><\/script>');</script>
+    
+    <!-- Adaptive engine orchestrator (v2 is the main one) -->
+    <script>document.write('<script src="adaptive-engine-v2.js?v=' + cacheBuster + '"><\/script>');</script>
+    
+    <!-- API client and main app -->
+    <script>document.write('<script src="api-client.js?v=' + cacheBuster + '"><\/script>');</script>
+    <script>document.write('<script src="app.js?v=' + cacheBuster + '"><\/script>');</script>
+</body>
+</html>

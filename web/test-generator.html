@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Generator</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        button { padding: 10px 20px; font-size: 16px; margin: 10px 0; }
+        .result { margin: 10px 0; padding: 10px; background: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <h1>Test Making 10s Generator</h1>
+    <button onclick="testGenerator()">Generate 10 Questions</button>
+    <div id="results"></div>
+
+    <script src="curriculum.js"></script>
+    <script>
+        function testGenerator() {
+            const lesson = CURRICULUM[0].lessons[0]; // Making 10s
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>Generated Questions:</h2>';
+            
+            for (let i = 0; i < 10; i++) {
+                const problem = lesson.generator(5);
+                results.innerHTML += `<div class="result">${i+1}. ${problem.q} = ${problem.a}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
